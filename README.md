@@ -55,7 +55,7 @@ I am using [EMR Bootstrap Action (BA)](https://docs.aws.amazon.com/emr/latest/Ma
 ## Using Custom CloudWatch Metrics to configure EMR Automatic Scaling
 As of now (EMR 5.30.1), you cannot use or configure custom metrics through EMR console. Only way to use custom
  metrics to configure EMR automatic scaling is to launch the EMR cluster using AWS CLI. Here is a sample AWS CLI to
-  launch an EMR cluster with automatic scaling policies using custom metrics.
+ launch an EMR cluster with automatic scaling policies using custom metrics.
 
 ```bash
 aws emr create-cluster --release-label emr-5.30.1 --name 'EMR-AS-Custom-Metrics' \
@@ -63,14 +63,16 @@ aws emr create-cluster --release-label emr-5.30.1 --name 'EMR-AS-Custom-Metrics'
 --bootstrap-actions Path=s3://aws-data-analytics-blog/emr-custom-metrics/setup-custom-metrics.sh,Name=SetupCustomMetrics \
 --ec2-attributes '{"KeyName":"<<your-key-name>>","InstanceProfile":"EMR_EC2_DefaultRole","SubnetId":"<<your-subnet-id>>"}' \
 --service-role EMR_DefaultRole --auto-scaling-role EMR_AutoScaling_DefaultRole \
---instance-groups file://./scripts/instance-group-config.json
+--instance-groups file://./config/instance-group-config.json \
+--configurations file://./config/configuration.json
 ```
 
-I'm using a separate JSON file [instance-group-config.json](scripts/instance-group-config.json) to pass the instance
- groups configuration. Please change the config file based on your requirement. Here is the snippet of the
- configuration file where I'm using the custom metric value - **YARNCoreAvailablePercentage** to configure scale out
- & scale in policy. For scale out, when YARNCoreAvailablePercentage <= 20, it will add 2 nodes to the cluster. For
- scale in, when YARNCoreAvailablePercentage > 75, then it will reduce the cluster size by 2.
+I'm using a separate JSON file [instance-group-config.json](config/instance-group-config.json) to pass the instance
+ groups configuration and [configuration.json](config/configuration.json) file to update default the YARN calculator
+ . Please change the configuration file based on your requirement. Here is the snippet of the configuration file
+ where I'm using the custom metric value - **YARNCoreAvailablePercentage** to configure scale out & scale in policy
+ . For scale out, when YARNCoreAvailablePercentage <= 20, it will add 2 nodes to the cluster. For scale in, when
+ YARNCoreAvailablePercentage > 75, then it will reduce the cluster size by 2.
 
 ```json
 "Rules":
@@ -136,3 +138,31 @@ I'm using a separate JSON file [instance-group-config.json](scripts/instance-gro
 ]
 ```
 ## Demo
+Using the above AWS CLI, I launched an Amazon EMR cluster with custom metric-based automatic scaling policies. Once
+ the cluster is ready, I can verify the autoscaling policy on Amazon EMR console.
+
+![Autoscaling-policies](images/autoscailng-policies.png)
+
+I log in to the EMR master node and submit a Spark job. This Spark job reads Amazon review data in TSV format from
+ Amazon S3, calculates total number of product category and finally converts the data into Parquet and writes back to
+ S3. This job will request > 40 YARN containers or Spark executors to process the data. The goal for this job is to
+ demonstrate how EMR cluster scale out and scale in based on YARN core usage - the custom metric which is configured
+ through this solution.
+
+```bash
+spark-submit --name "SparkJob" --deploy-mode cluster --conf spark.dynamicAllocation.minExecutors=55 \
+s3://aws-data-analytics-blog/emr-custom-metrics/spark_converter.py \
+s3://amazon-reviews-pds/tsv/ <<s3-output-location>>
+```
+
+
+## Considerations
+- This solution is just for a reference, it's not built for production workload. Please configure and test before
+ running this in production.
+- As of now (EMR 5.30.1), custom metrics cannot be used from the Amazon EMR console. You need to use AWS CLI to
+ launch the cluster.
+- You cannot clone an existing cluster that uses custom metrics-based autoscaling, it will break the automatic
+ scaling configuration.
+- Automatic scaling cannot be changed or de-attached from an existing cluster that uses custom metric. Only way to
+ apply new automatic scaling policy is to create a new cluster.
+    

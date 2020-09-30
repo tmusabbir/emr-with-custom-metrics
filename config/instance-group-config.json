@@ -16,7 +16,7 @@
        "InstanceType":"r5.4xlarge",
        "InstanceGroupType":"TASK",
        "Name":"Task - 3",
-       "BidPrice": "0.5",
+       "BidPrice": "OnDemandPrice",
        "AutoScalingPolicy":{
           "Constraints":{
              "MaxCapacity":20,
@@ -29,7 +29,7 @@
                 "Action":{
                    "SimpleScalingPolicyConfiguration":{
                       "AdjustmentType":"CHANGE_IN_CAPACITY",
-                      "ScalingAdjustment":2,
+                      "ScalingAdjustment":5,
                       "CoolDown":300
                    }
                 },
@@ -46,7 +46,7 @@
                       "Period":300,
                       "ComparisonOperator":"LESS_THAN_OR_EQUAL",
                       "Statistic":"AVERAGE",
-                      "Threshold":20,
+                      "Threshold":25,
                       "Unit":"PERCENT",
                       "MetricName":"YARNCoreAvailablePercentage"
                    }
