@@ -1,0 +1,87 @@
+[
+    {
+       "InstanceCount":1,
+       "InstanceGroupType":"MASTER",
+       "InstanceType":"m5.2xlarge",
+       "Name":"Master - 1"
+    },
+    {
+       "InstanceCount":2,
+       "InstanceGroupType":"CORE",
+       "InstanceType":"r5.4xlarge",
+       "Name":"Core - 2"
+    },
+    {
+       "InstanceCount":1,
+       "InstanceType":"r5.4xlarge",
+       "InstanceGroupType":"TASK",
+       "Name":"Task - 3",
+       "BidPrice": "0.5",
+       "AutoScalingPolicy":{
+          "Constraints":{
+             "MaxCapacity":20,
+             "MinCapacity":0
+          },
+          "Rules":[
+             {
+                "Name":"scale-out-yarn-available-core-percentage",
+                "Description":"Scale-out policy",
+                "Action":{
+                   "SimpleScalingPolicyConfiguration":{
+                      "AdjustmentType":"CHANGE_IN_CAPACITY",
+                      "ScalingAdjustment":2,
+                      "CoolDown":300
+                   }
+                },
+                "Trigger":{
+                   "CloudWatchAlarmDefinition":{
+                      "Dimensions":[
+                         {
+                            "Key":"JobFlowId",
+                            "Value":"${emr.clusterId}"
+                         }
+                      ],
+                      "EvaluationPeriods":1,
+                      "Namespace":"AWS/ElasticMapReduce",
+                      "Period":300,
+                      "ComparisonOperator":"LESS_THAN_OR_EQUAL",
+                      "Statistic":"AVERAGE",
+                      "Threshold":20,
+                      "Unit":"PERCENT",
+                      "MetricName":"YARNCoreAvailablePercentage"
+                   }
+                }
+             },
+             {
+                "Name":"scale-in-yarn-available-core-percentage",
+                "Description":"Scale-in policy",
+                "Action":{
+                   "SimpleScalingPolicyConfiguration":{
+                      "AdjustmentType":"CHANGE_IN_CAPACITY",
+                      "ScalingAdjustment":-2,
+                      "CoolDown":300
+                   }
+                },
+                "Trigger":{
+                   "CloudWatchAlarmDefinition":{
+                      "Dimensions":[
+                         {
+                            "Key":"JobFlowId",
+                            "Value":"${emr.clusterId}"
+                         }
+                      ],
+                      "EvaluationPeriods":1,
+                      "Namespace":"AWS/ElasticMapReduce",
+                      "Period":300,
+                      "ComparisonOperator":"GREATER_THAN",
+                      "Statistic":"AVERAGE",
+                      "Threshold":75,
+                      "Unit":"PERCENT",
+                      "MetricName":"YARNCoreAvailablePercentage"
+                   }
+                }
+             }
+          ]
+       }
+    }
+ ]
