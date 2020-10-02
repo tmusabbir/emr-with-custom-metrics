@@ -8,12 +8,12 @@
     {
        "InstanceCount":2,
        "InstanceGroupType":"CORE",
-       "InstanceType":"r5.4xlarge",
+       "InstanceType":"m5.2xlarge",
        "Name":"Core - 2"
     },
     {
        "InstanceCount":1,
-       "InstanceType":"r5.4xlarge",
+       "InstanceType":"m5.2xlarge",
        "InstanceGroupType":"TASK",
        "Name":"Task - 3",
        "BidPrice": "OnDemandPrice",

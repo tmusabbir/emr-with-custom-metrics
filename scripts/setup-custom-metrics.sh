@@ -11,7 +11,7 @@ if [ "$IS_MASTER" = false ]; then
 exit 0
 fi
 
-REGION=`curl -s http/://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/\(.*\)[a-z]/\1/'`
+REGION=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/\(.*\)[a-z]/\1/'`
 HOSTNAME=`curl -s http://169.254.169.254/latest/meta-data/public-hostname`
 
 echo $REGION > /tmp/aws-region
